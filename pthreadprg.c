@@ -124,8 +124,7 @@ void *thread_function(void *threadarg)
 			}
 			else if(my_data->buffer[k]=='\n')
 			{
-				if(isalpha(my_data->buffer[k+1]))
-				my_data->wcount++;
+			my_data->wcount++;
 //			printf("\nTHREAD [%d] :IS NEWLINE[%d] %c||Lines counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->lcount+1));
 				my_data->lcount++;
 				my_data->ccount++;
@@ -177,7 +176,6 @@ void *excess_thread_function(void *threadarg)
 			}
 			else if(my_data->buffer[k]=='\n')
 			{
-				if(isalpha(my_data->buffer[k+1]))
 				my_data->wcount++;
 //				printf("\nTHREAD [%d] :IS NEWLINE[%d] %c||Lines counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->lcount+1));
 				my_data->lcount++;
@@ -187,7 +185,7 @@ void *excess_thread_function(void *threadarg)
 			{
 //				printf("\nTHREAD [%d] :IS SPACE[%d] %c||Word counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->wcount+1));
 				my_data->ccount++;
-				if(isalpha(my_data->buffer[k+1]))
+//				if(isalpha(my_data->buffer[k+1]))
 				my_data->wcount++;
 			}
 			else
