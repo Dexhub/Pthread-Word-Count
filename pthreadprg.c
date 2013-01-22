@@ -13,6 +13,7 @@ Date:Jan-16-2013
 #include <pthread.h>
 #include <stdio.h>
 typedef unsigned long count_t;
+typedef enum {false=0, true=1} bool;
 void *thread_function(void *);
 void *excess_thread_function(void *);
 
@@ -42,14 +43,15 @@ int main()
 	FILE *f;
 	int excess;
 	pthread_t thread[NUM_THREADS],excess_thread;
-  if (f = fopen("fred.txt", "rt"))
+  if (f = fopen("iliad.mb.txt", "rt"))
   {		
 			int i;
 			while (!feof(f))
 			{
+				bool flag=false;
 				i=0;
 				int round=0;
-				for(; i<NUM_THREADS;i++,round++)
+				for(flag=false; i<NUM_THREADS;i++,round++)
 				{
 					excess=(fread(thread_data[i].buffer, 1, 30, f));
 					thread_data[i].thread_id=i;
@@ -60,6 +62,7 @@ int main()
 //Invoke function that serially calculates the remaining arguments: buffer[i] and excess
 						thread_data[i].error=excess;
 						pthread_create(&excess_thread,NULL, excess_thread_function, (void*) &thread_data[i]);
+						flag=true;
 						break;
 					}
 				}
@@ -74,24 +77,26 @@ int main()
 						total_lcount+=thread_data[i].lcount;
 						total_error+=thread_data[i].error;
 					//	total_wcount+=(total_lcount/2)-1;
-			 		printf("\n\n\t\t=====TOTAL AFTER JOINING THREAD[%d]=============\nTotal Character Counter: %6lu Total Word Count: %6lu Total Lines:%6lu",i,total_ccount,total_wcount,total_lcount);
+//			 		printf("\n\n\t\t=====TOTAL AFTER JOINING THREAD[%d]=============\nTotal Character Counter: %6lu Total Word Count: %6lu Total Lines:%6lu",i,total_ccount,total_wcount,total_lcount);
        					}
 				}
-					/*Joining the Last thread- The Excess Thread*/
+					if(flag){	/*Joining the Last thread- The Excess Thread*/
 				  if(pthread_join(excess_thread, NULL)){
-					fprintf(stderr, "Error joining Excess thread \n");}
+					fprintf(stderr, "Error joining Excess thread \n");
+}
 					else{        
 						total_ccount+=thread_data[i].ccount;
 						total_wcount+=thread_data[i].wcount;
 						total_lcount+=thread_data[i].lcount;
 						total_error+=thread_data[i].error;
 						
-			 		printf("\n\n\t\t=====TOTAL AFTER JOINING EXCESS THREAD[%d]=============\nTotal Character Counter: %6lu Total Word Count: %6lu Total Lines:%6lu",i,total_ccount,total_wcount,total_lcount);
+//			 		printf("\n\n\t\t=====TOTAL AFTER JOINING EXCESS THREAD[%d]=============\nTotal Character Counter: %6lu Total Word Count: %6lu Total Lines:%6lu",i,total_ccount,total_wcount,total_lcount);
 
 							}
+					}
 			}
     }
-total_wcount+=total_lcount;
+//total_wcount+=total_lcount;
 
 printf("\n\n\t\n==============:TOTAL:===========\n\tTotal Character Counter: %6lu \n\t Total Word Count: %6lu \n\t Total Lines:%6lu \n\t Total Special Characters: %6lu\n",total_ccount,total_wcount,total_lcount,total_error);
 fclose(f);
@@ -108,34 +113,42 @@ void *thread_function(void *threadarg)
 	my_data->wcount=0;
 	my_data->lcount=0;
 	my_data->error=0;
-	printf("\n=========================================================================================\nThread String Array[%d]:%s",my_data->thread_id,my_data->buffer);
+//	printf("\n=========================================================================================\nThread String Array[%d]:%s",my_data->thread_id,my_data->buffer);
    int k=0;
    		while(k<30)
 		{
 		
-			if(isalpha(my_data->buffer[k])|| my_data->buffer[k]== '\n'){
-				printf("\nTHREAD [%d] :IS ALPHA[%d] %c ||Char counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->ccount+1));
+			if(isalpha(my_data->buffer[k])|| my_data->buffer[k]== '.'){
+//				printf("\nTHREAD [%d] :IS ALPHA[%d] %c ||Char counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->ccount+1));
 				my_data->ccount++;
 			}
-			else if(my_data->buffer[k]=='.')
+			else if(my_data->buffer[k]=='\n')
 			{
-				printf("\nTHREAD [%d] :IS NEWLINE[%d] %c||Lines counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->lcount+1));
+				if(isalpha(my_data->buffer[k+1]))
+				my_data->wcount++;
+//			printf("\nTHREAD [%d] :IS NEWLINE[%d] %c||Lines counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->lcount+1));
 				my_data->lcount++;
 				my_data->ccount++;
 			}
 			else if(my_data->buffer[k]== ' ')
 			{
-				printf("\nTHREAD [%d] :IS SPACE[%d]  %c||Word counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->wcount+1));
-				my_data->wcount++;
+//				printf("\nTHREAD [%d] :IS SPACE[%d]  %c||Word counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->wcount+1));
 				my_data->ccount++;
+				if(isalpha(my_data->buffer[k+1]))
+				my_data->wcount++;
 			}
 			else
 			{
 				my_data->error++;
-				printf("\nTHREAD [%d] :ERROR Character [%d]: %c||Error counter %6lu",my_data->thread_id,k,my_data->buffer[k],my_data->error);
+				my_data->ccount++;
+				if(isalpha(my_data->buffer[k+1]))
+				my_data->wcount++;
+//				printf("\nTHREAD [%d] :ERROR Character [%d]: %c||Error counter %6lu",my_data->thread_id,k,my_data->buffer[k],my_data->error);
 			}
+
+			
 		fflush(stdout);
-		usleep(100*1000);
+//		usleep(100*1000);
 		k++;
 		}
 }
@@ -152,36 +165,42 @@ void *excess_thread_function(void *threadarg)
 	my_data->error=0;
    int k=0;
 
-	printf("\n=========================================================================================\nThread String Array[%d]:%s",my_data->thread_id,my_data->buffer);
+//	printf("\n=========================================================================================\nThread String Array[%d]:%s",my_data->thread_id,my_data->buffer);
 
 
    		while(k<excess)
 		{
 		
-			if(isalpha(my_data->buffer[k] || my_data->buffer[k]== '\n')){
-				printf("\nTHREAD [%d] :IS ALPHA[%d] %c||Char counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->ccount+1));
+			if(isalpha(my_data->buffer[k] || my_data->buffer[k]== '.')){
+//				printf("\nTHREAD [%d] :IS ALPHA[%d] %c||Char counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->ccount+1));
 				my_data->ccount++;
 			}
-			else if(my_data->buffer[k]=='.')
+			else if(my_data->buffer[k]=='\n')
 			{
-				printf("\nTHREAD [%d] :IS NEWLINE[%d] %c||Lines counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->lcount+1));
+				if(isalpha(my_data->buffer[k+1]))
+				my_data->wcount++;
+//				printf("\nTHREAD [%d] :IS NEWLINE[%d] %c||Lines counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->lcount+1));
 				my_data->lcount++;
 				my_data->ccount++;
 			}
 			else if(my_data->buffer[k]== ' ')
 			{
-				printf("\nTHREAD [%d] :IS SPACE[%d] %c||Word counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->wcount+1));
-				my_data->wcount++;
+//				printf("\nTHREAD [%d] :IS SPACE[%d] %c||Word counter %6lu",my_data->thread_id,k,my_data->buffer[k],(my_data->wcount+1));
 				my_data->ccount++;
+				if(isalpha(my_data->buffer[k+1]))
+				my_data->wcount++;
 			}
 			else
 			{
 				my_data->error++;
-				printf("\nTHREAD [%d] :ERROR Character [%d]: %c||Error counter %6lu",my_data->thread_id,k,my_data->buffer[k],my_data->error);
+//				printf("\nTHREAD [%d] :ERROR Character [%d]: %c||Error counter %6lu",my_data->thread_id,k,my_data->buffer[k],my_data->error);
 				my_data->ccount++;
+				if(isalpha(my_data->buffer[k+1]))
+				my_data->wcount++;
+				
 			}
 		fflush(stdout);
-		usleep(100*1000);
+//		usleep(100*1000);
 		k++;
 		}
 }
