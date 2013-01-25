@@ -23,6 +23,12 @@ count_t total_wcount;
 count_t total_lcount;
 count_t total_error;
 
+//Total counters for all files
+count_t sum_total_ccount;
+count_t sum_total_wcount;
+count_t sum_total_lcount;
+count_t sum_total_error;
+
 //Number of threads
 int NUM_THREADS=3;
 
@@ -37,15 +43,26 @@ struct thread_data_structure{
 };
 
 //Main Function
-int main()
+int main(int argc, char **argv)
 {
 	struct thread_data_structure thread_data[NUM_THREADS];
 	FILE *f;
-	int excess;
+	int m=1;
 	pthread_t thread[NUM_THREADS],excess_thread;
-  if (f = fopen("iliad.mb.txt", "rt"))
+
+	if (argc < 2)
+	 printf ("usage: wc FILE [FILE...]\n");
+
+for (; m < argc; m++)
+{
+  if (f = fopen(argv[m], "rt"))
   {		
-			int i;
+			count_t total_ccount=0;
+			count_t total_wcount=0;
+			count_t total_lcount=0;
+			count_t total_error=0;
+
+			int i,excess=0;
 			while (!feof(f))
 			{
 				bool flag=false;
@@ -81,27 +98,49 @@ int main()
        					}
 				}
 					if(flag){	/*Joining the Last thread- The Excess Thread*/
-				  if(pthread_join(excess_thread, NULL)){
-					fprintf(stderr, "Error joining Excess thread \n");
-}
-					else{        
-						total_ccount+=thread_data[i].ccount;
-						total_wcount+=thread_data[i].wcount;
-						total_lcount+=thread_data[i].lcount;
-						total_error+=thread_data[i].error;
+				  			if(pthread_join(excess_thread, NULL)){
+								fprintf(stderr, "Error joining Excess thread \n");
+								}
+							else{        
+								total_ccount+=thread_data[i].ccount;
+								total_wcount+=thread_data[i].wcount;
+								total_lcount+=thread_data[i].lcount;
+								total_error+=thread_data[i].error;
 						
 //			 		printf("\n\n\t\t=====TOTAL AFTER JOINING EXCESS THREAD[%d]=============\nTotal Character Counter: %6lu Total Word Count: %6lu Total Lines:%6lu",i,total_ccount,total_wcount,total_lcount);
 
-							}
-					}
-			}
-    }
+									}
+							}//if flag
+			}//while
+    
 //total_wcount+=total_lcount;
 
-printf("\n\n\t\n==============:TOTAL:===========\n\tTotal Character Counter: %6lu \n\t Total Word Count: %6lu \n\t Total Lines:%6lu \n\t Total Special Characters: %6lu\n",total_ccount,total_wcount,total_lcount,total_error);
+printf("\n\n\t\n==============:%s:===========\n\tTotal Character Counter: %6lu \n\t Total Word Count: %6lu \n\t Total Lines:%6lu \n\t Total Special Characters: %6lu\n",argv[m],total_ccount,total_wcount,total_lcount,total_error);
 fclose(f);
 
+//Total counters for all files
+sum_total_ccount+=total_ccount;
+sum_total_wcount+=total_wcount;
+sum_total_lcount+=total_lcount;
+sum_total_error+=total_error;
+
+}//if open
+
+else//else open
+{
+	printf("Error Opening File %s", argv[m]);
 }
+
+}//for loop
+
+if(m>2)
+{
+		printf("\n\n\t\n==============:TOTAL WORD COUNT FOR ALL FILES:===========\n\tTotal Character Counter: %6lu \n\t Total Word Count: %6lu \n\t Total Lines:%6lu \n\t Total Special Characters: %6lu\n",sum_total_ccount,sum_total_wcount,sum_total_lcount,sum_total_error);
+
+
+}
+
+}//main
 
 //Function for Threads- USE: Process the 30 character large chunk of data and fill the Ccount,Wcount and Lcount.
 void *thread_function(void *threadarg)
